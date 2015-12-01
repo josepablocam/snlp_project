@@ -1,141 +1,181 @@
+from sklearn import svm
+
 __author__ = 'xiuyanni'
 import csv
 import nltk
+import getopt
+import sys
+import time
 from nltk import FreqDist
-def readTwitterData(dataFile):
-    f = open(dataFile)
-    csv_f = csv.reader(f)
-    sentimentLabels = [] # list of str
-    twitterSentences = [] # list of str
-    for row in csv_f:
-        sentimentLabels.append(row[0])
-        twitterSentences.append(row[-1])
+import nltk.classify
+from collections import Counter
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
+from sklearn.cross_validation import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.naive_bayes import GaussianNB
 
-    for i in range(len(twitterSentences)): # make the sentence into a list of strings
-        twitterSentences[i] = twitterSentences[i].split()
+bagofwords_features = []
 
-  #  print "type(sentimentLabels[0]), type(twitterSentences[0])", type(sentimentLabels[0]), type(twitterSentences[0]), twitterSentences[0]
-    return sentimentLabels, twitterSentences
-
-def readBlogData(labeledDataFile, sentencesFile):
-    with open(labeledDataFile, "r") as f:
-        dataList = [line.split() for line in f]
-    f.close()
-    with open(sentencesFile, "r") as f2:
-        sentenceList = [line.split() for line in f2]
-    f2.close()
-    emotionLabels = []
-    emotionIndicators = []
-    blogSentences = []
-    for dataRecord in dataList:
-        emotionLabels.append(dataRecord[1])
-        emotionIndicators.append(dataRecord[3:len(dataRecord)])
-    for sentence in sentenceList:
-        blogSentences.append(sentence[1:len(sentence)])
-
-  #  print "type(emotionLabels[0]), type(blogSentences[0])", type(emotionLabels[0]), type(blogSentences[0]), blogSentences[0]
-    return emotionLabels, blogSentences
-def prepareBlogData(blogLabelsPath, blogSentencePath):
-    originalBlogData = []
-    blogDataForClassifier = [] # change all words to lowercase
-    blogDataLabels, blogDataSentences = readBlogData(blogLabelsPath, blogSentencePath)
-    for i in range(len(blogDataLabels)):
-        originalBlogData.append((blogDataSentences[i], blogDataLabels[i]))
-    for (words, emotion) in originalBlogData:
-        if (emotion == 'ne'):
-            currentLabel = '0'
-        else:
-            currentLabel = '1'
-        words_filtered = [e.lower() for e in words if len(e) >= 3]
-      #  blogDataForClassifier.append((' '.join(words_filtered), currentLabel))
-        blogDataForClassifier.append((words_filtered, currentLabel))
-    return blogDataForClassifier
+from ReadData import *
+import Globals
 
 
-def prepareTwitterData(twitterDataFile):
-    originalData = []
-    dataForClassifier = [] # change all words to lowercase
-    twitterLabels, twitterSentences = readTwitterData(twitterDataFile)
-    for i in range(len(twitterLabels)):
-        originalData.append((twitterSentences[i], twitterLabels[i]))
-    for (words, emotion) in originalData:
-        if (emotion == '2'):
-            currentLabel = '0'
-        else:
-            currentLabel = '1'
-        words_filtered = [e.lower() for e in words if len(e) >= 3]
-    #    dataForClassifier.append((' '.join(words_filtered), currentLabel))
-        dataForClassifier.append((words_filtered, currentLabel))
-
-    return dataForClassifier
+# def getwordsFromLabeledData(labeledData):
 
 
+def getBagofwordsWordFeatures(labeledData):
+    """
 
-def getwordsFromLabeledData(labeledData):
+    :rtype : list
+    """
     all_words = []
     for (words, sentiment) in labeledData:
-      all_words.extend(words)
-    return all_words
-
-def getWordFeatures(wordlist):
-    wordlist = nltk.FreqDist(wordlist)
+        all_words.extend(words)
+    wordlist = nltk.FreqDist(all_words)
     word_features = wordlist.keys()
     return word_features
 
-def word_feats(words):
-    return dict([(word, True) for word in words])
-
-labeledBlogData = prepareBlogData("../Emotion-Data/AnnotatedData/AnnotSet1.txt", "../Emotion-Data/AnnotatedData/basefile.txt")
-twitterTestingData = prepareTwitterData("../trainingandtestdata/testdata.manual.2009.06.14.csv")
-
-word_features = getWordFeatures(getwordsFromLabeledData(labeledBlogData))
-
-blogDataWithEmotion = [b for b in labeledBlogData if b[1] == '1']
-blogDataWithoutEmotion = [b for b in labeledBlogData if b[1] == '0']
-emotionCutoff = len(blogDataWithEmotion) * 3/4
-nonEmotionCutoff = len(blogDataWithoutEmotion) * 3/4
-
-blogtrainingSet = blogDataWithEmotion[:emotionCutoff] + blogDataWithoutEmotion[:nonEmotionCutoff]
-blogtestingSet = blogDataWithEmotion[emotionCutoff:] + blogDataWithoutEmotion[nonEmotionCutoff:]
 
 # return a dict, key is the word, value is True or False
-def extract_features(document):
+def bagofwordsFeatureExtractor(document):
+
     document_words = set(document)
     features = {}
-    for word in word_features:
+    for word in bagofwords_features:
         features['contains(%s)' % word] = (word in document_words)
     return features
 
-def calcualteAccuracy(clr, testRecords):
+def ngramFeatureExtractor(document):
+    assert isinstance(document, list)
+
+    #TODO: implement n gram feature extractor
+    features = Counter()
+    for i in range(len(document) - 1):
+        features[(document[i], document[i+1])] += 1
+    return features
+# all words appear in the dict has a value True
+#def word_feats(words):
+#    return dict([(word, True) for word in words])
+
+
+def calcualteAccuracy(clr, featureName, testRecords):
     correctCount = 0.0
     for testRecord in testRecords:
-        predictLabel = clr.classify(extract_features(testRecord[0]))
+        if featureName == "bagofwords":
+            predictLabel = clr.classify(bagofwordsFeatureExtractor(testRecord[0]))
+        elif featureName == 'ngram':
+            predictLabel = clr.classify(ngramFeatureExtractor(testRecord[0]))
+        else:
+            predictLabel = clr.classify(bagofwordsFeatureExtractor(testRecord[0])) # default feature is bag of words
+
         if predictLabel == testRecord[1]:
             correctCount += 1
     return correctCount / len(testRecords)
 
-# training_set is a list of tuple,
-# the first element of the tuple is a dict,
-# the second element of the tuple is the label
-training_set = nltk.classify.apply_features(extract_features, blogtrainingSet)
-import time
-print "start naive training: ", time.asctime()
-naiveClassifier = nltk.NaiveBayesClassifier.train(training_set)
-print "end naive training: ", time.asctime()
-naiveAccuracy1 = calcualteAccuracy(naiveClassifier, blogtestingSet)
-naiveAccuracy2 = calcualteAccuracy(naiveClassifier, twitterTestingData)
-print "Naive classifier the accuracy for 3/4 train on blog, and  1/4 test on blog is: " , naiveAccuracy1
-print "Naive classifier the accuracy of training on blog, and test on twitter test is:", naiveAccuracy2
-import nltk.classify
-from sklearn.svm import LinearSVC
+# not in use, use the crossvalidation in sklearn
+def split_train_test(labeledBlogData, CUTOFF):
 
-svmClassifier = nltk.classify.SklearnClassifier(LinearSVC())
-print "start svm training: ", time.asctime()
-svmClassifier.train(training_set)
-print "end svm  training: ", time.asctime()
+    blogDataWithEmotion = [b for b in labeledBlogData if b[1] == '1']
 
-svmAccuracy1 = calcualteAccuracy(svmClassifier, blogtestingSet)
-svmAccuracy2 = calcualteAccuracy(svmClassifier, twitterTestingData)
+    blogDataWithoutEmotion = [b for b in labeledBlogData if b[1] == '0']
+    emotionCutoff = int(len(blogDataWithEmotion) * CUTOFF)
+    nonEmotionCutoff = int(len(blogDataWithoutEmotion) * CUTOFF)
 
-print "SVM classifier the accuracy for 3/4 train on blog, and  1/4 test on blog is: " , svmAccuracy1
-print "SVM classifier the accuracy of training on blog, and test on twitter test is:", svmAccuracy2
+    blogtrainingSet = blogDataWithEmotion[:emotionCutoff] + blogDataWithoutEmotion[:nonEmotionCutoff]
+    blogtestingSet = blogDataWithEmotion[emotionCutoff:] + blogDataWithoutEmotion[nonEmotionCutoff:]
+    return blogtrainingSet, blogtestingSet
+
+def getX(data):
+    return [obs[0] for obs in data]
+
+def getY(data):
+    return [obs[1] for obs in data]
+
+def get_gaussianNB_model(tr_x, tr_y):
+    clf = GaussianNB()
+    clf.fit(tr_x, tr_y)
+    return clf
+
+def predict_GaussianNB(X_train, y_train, X_test, y_test):
+    model = get_gaussianNB_model(X_train, y_train)
+    predicted = model.predict(X_test)
+
+    return accuracy_score(y_test, predicted)
+
+
+def main(argv):
+
+    import nltk
+
+    twitterfile = ''
+    blogtagfile = ''
+    blogsentencefile = ''
+    classifierName = ''
+    featureName = ''
+
+    try:
+        opts, args = getopt.getopt(argv,"hi:o:",["classifierName=", "featureName="])
+    except getopt.GetoptError:
+        print 'nltkClassifiers.py -classifierName <naive, svm, logistic> -featureName <feature extractor>'
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt.lower() == '-h':
+            print 'nltkClassifiers.py -classifierName <naive, svm, logistic> -featureName <feature extractor>'
+            sys.exit()
+        elif opt.lower() in ("--classifiername"):
+            classifierName = arg
+        elif opt.lower() in ("--featurename"):
+            featureName = arg
+
+    print 'Classifier: ', classifierName
+    print 'Feature: ', featureName
+
+    binarylabeledBlogData = prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'])
+ #   twitterTestingData = prepareTwitterData(Globals.TWITTER_TEST)
+
+  #  allSentences = getX(emotionlabeledBlogData)
+  #  allLabels = getY(emotionlabeledBlogData)
+    (trainingData, validationData) = train_test_split(binarylabeledBlogData, test_size = 0.2, random_state = 10)
+ #   blogtrainingSet, blogtestingSet = split_train_test(emotionlabeledBlogData, 0.75)
+    global bagofwords_features
+
+    bagofwords_features = getBagofwordsWordFeatures(trainingData)
+    # training_set is a list of tuple,
+    # the first element of the tuple is a dict,
+    # the second element of the tuple is the label
+    if featureName == "bagofwords":
+        training_set = nltk.classify.apply_features(bagofwordsFeatureExtractor, trainingData)
+    elif featureName == "ngram":
+        training_set = nltk.classify.apply_features(ngramFeatureExtractor, trainingData)
+    else:
+        training_set = nltk.classify.apply_features(bagofwordsFeatureExtractor, trainingData) # default feature is bag of words
+
+    print "start training: ", classifierName,"with feature: ",featureName,  time.asctime()
+    print "this is the traning set:", len(training_set)
+
+    if classifierName.lower() == "naive":
+        myClassifier = nltk.NaiveBayesClassifier.train(training_set)
+
+        # naive bayes
+    else:
+        if classifierName.lower() == "linearsvm":
+            myClassifier = nltk.classify.SklearnClassifier(LinearSVC())
+            myClassifier.train(training_set)
+        elif classifierName.lower() == "rbfsvm":
+            myClassifier = nltk.classify.SklearnClassifier(svm.SVC(C=1, kernel='rbf'))
+            myClassifier.train(training_set)
+        elif classifierName.lower() == "logistic":
+          #  print "great , I am training logistic"
+            myClassifier = nltk.classify.SklearnClassifier(LogisticRegression())
+            myClassifier.train(training_set)
+        else:
+            myClassifier = nltk.NaiveBayesClassifier.train(training_set) # default classifier, naive bayes
+
+    print "end training ", classifierName, time.asctime()
+
+    accuracy = calcualteAccuracy(myClassifier, featureName, validationData)
+    print "The accuracy of ", classifierName, "on feature ", featureName, "is ", accuracy
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
