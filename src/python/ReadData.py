@@ -2,6 +2,7 @@
 
 import csv
 import codecs
+import random
 
 def readTwitterData(dataFile, splitwords = True):
     f = open(dataFile)

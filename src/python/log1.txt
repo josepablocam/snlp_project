@@ -1,0 +1,144 @@
+/usr/local/Cellar/python/2.7.8_2/Frameworks/Python.framework/Versions/2.7/bin/python2.7 /Users/xiuyanni/Documents/github/snlp_project/src/python/Main.py
+Collecting training and test data
+train on:  0.8 of twitterwiki , test on:  0.2 of  twitterwiki
+Applying filter: no_eq_ineq
+Applying filter: no_paren_nums
+Applying filter: alpha_start
+Applying filter: no_quotes
+Applying filter: no_dash_space
+Featurizing
+The result for SVM with linear kernel is:
+start svm training:  Thu Dec  3 12:22:46 2015
+end svm  training:  Thu Dec  3 12:23:17 2015
+             precision    recall  f1-score   support
+
+          0       0.98      0.98      0.98    248410
+          1       0.99      0.99      0.99    319371
+
+avg / total       0.98      0.98      0.98    567781
+
+Accuracy: 0.984649
+None
+Collecting training and test data
+train on:  0.8 of twitter , test on:  0.2 of  twitter
+Featurizing
+The result for SVM with linear kernel is:
+start svm training:  Thu Dec  3 12:24:24 2015
+end svm  training:  Thu Dec  3 12:25:00 2015
+             precision    recall  f1-score   support
+
+          0       0.79      0.80      0.80    157404
+          4       0.81      0.80      0.80    162339
+
+avg / total       0.80      0.80      0.80    319743
+
+Accuracy: 0.799598
+None
+Collecting training and test data
+train on:  0.8 of bi_blog , test on:  0.2 of  bi_blog
+Featurizing
+The result for SVM with linear kernel is:
+start svm training:  Thu Dec  3 12:25:02 2015
+end svm  training:  Thu Dec  3 12:25:02 2015
+             precision    recall  f1-score   support
+
+          0       0.88      0.78      0.83       733
+          1       0.59      0.75      0.66       308
+
+avg / total       0.79      0.77      0.78      1041
+
+Accuracy: 0.770413
+None
+Collecting training and test data
+train on:  0.8 of multi_blog , test on:  0.2 of  multi_blog
+Featurizing
+The result for SVM with linear kernel is:
+start svm training:  Thu Dec  3 12:25:02 2015
+end svm  training:  Thu Dec  3 12:25:03 2015
+             precision    recall  f1-score   support
+
+         ag       0.15      0.62      0.24        13
+         dg       0.49      0.88      0.63        25
+         fr       0.04      0.17      0.06         6
+         hp       0.46      0.72      0.56        76
+         me       0.11      0.35      0.17        23
+         ne       0.98      0.72      0.83       880
+         sd       0.13      0.75      0.22         8
+         sp       0.29      0.80      0.42        10
+
+avg / total       0.88      0.71      0.77      1041
+
+Accuracy: 0.714697
+None
+Collecting training and test data
+train on:  twitterwiki , test on:  blog
+Applying filter: no_eq_ineq
+Applying filter: no_paren_nums
+Applying filter: alpha_start
+Applying filter: no_quotes
+Applying filter: no_dash_space
+Featurizing
+The result for SVM with linear kernel is:
+start svm training:  Thu Dec  3 12:27:32 2015
+end svm  training:  Thu Dec  3 12:28:09 2015
+             precision    recall  f1-score   support
+
+          0       0.21      0.74      0.33       922
+          1       0.88      0.40      0.55      4283
+
+avg / total       0.76      0.46      0.51      5205
+
+Accuracy: 0.462248
+None
+Collecting training and test data
+train on:  twitter , test on:  blog
+Featurizing
+The result for SVM with linear kernel is:
+start svm training:  Thu Dec  3 12:28:14 2015
+end svm  training:  Thu Dec  3 12:28:14 2015
+             precision    recall  f1-score   support
+
+          0       0.02      0.69      0.03        83
+          1       0.99      0.38      0.55      5122
+
+avg / total       0.97      0.38      0.54      5205
+
+Accuracy: 0.382517
+None
+Collecting training and test data
+train on:  blog , test on:  twitter
+Featurizing
+The result for SVM with linear kernel is:
+start svm training:  Thu Dec  3 12:28:14 2015
+end svm  training:  Thu Dec  3 12:28:14 2015
+             precision    recall  f1-score   support
+
+          0       0.97      0.38      0.55       351
+          1       0.40      0.97      0.57       147
+
+avg / total       0.80      0.56      0.56       498
+
+Accuracy: 0.558233
+None
+Collecting training and test data
+train on:  blog , test on:  twitterwiki
+Applying filter: no_eq_ineq
+Applying filter: no_paren_nums
+Applying filter: alpha_start
+Applying filter: no_quotes
+Applying filter: no_dash_space
+Featurizing
+The result for SVM with linear kernel is:
+start svm training:  Thu Dec  3 12:31:10 2015
+end svm  training:  Thu Dec  3 12:31:11 2015
+             precision    recall  f1-score   support
+
+          0       0.95      0.52      0.67   2280724
+          1       0.31      0.88      0.46    558178
+
+avg / total       0.82      0.59      0.63   2838902
+
+Accuracy: 0.588219
+None
+
+Process finished with exit code 0
