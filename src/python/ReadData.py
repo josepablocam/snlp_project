@@ -102,4 +102,37 @@ def to_utf8(data):
             clean_data.append(clean_obs)
         except UnicodeDecodeError:
             pass
-    return clean_data          
+    return clean_data
+
+# read blog data using the original 7 emotion labels
+def prepareBlogDataWithEmotionLabel(blogLabelsPath, blogSentencePath, splitwords = True):
+    """
+    Get blog data, if splitwords sentence = list of strings, else string
+    """
+    originalBlogData = []
+    blogDataForClassifier = [] # change all words to lowercase
+    blogDataLabels, blogDataSentences = readBlogData(blogLabelsPath, blogSentencePath, splitwords)
+    for i in range(len(blogDataLabels)):
+        originalBlogData.append((blogDataSentences[i], blogDataLabels[i]))
+    for (words, emotion) in originalBlogData:
+
+        words_filtered = [e.lower() for e in words]
+        if splitwords:
+            blogDataForClassifier.append((words_filtered, emotion))
+        else:
+            blogDataForClassifier.append((' '.join(words_filtered), emotion))
+    return blogDataForClassifier
+
+# read the twitter data using its original positive and negative labels
+def prepareTwitterDataWithPNLabel(twitterDataFile, splitwords = True):
+    """
+    Read twitter data, if splitwords sentence = list of strings, else string
+    """
+    originalData = []
+    dataForClassifier = [] # change all words to lowercase
+    twitterLabels, twitterSentences = readTwitterData(twitterDataFile, splitwords)
+    for i in range(len(twitterLabels)):
+        originalData.append((twitterSentences[i], twitterLabels[i]))
+    for (words, emotion) in originalData:
+        dataForClassifier.append((words.lower(), emotion))
+    return dataForClassifier
