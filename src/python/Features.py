@@ -8,6 +8,8 @@ import scipy.sparse
 import numpy
 import nltk
 import re
+from collections import Counter
+
 
 
 # Utilities
@@ -26,7 +28,7 @@ def make_experiment_matrices(train_data, test_data, featurizer):
     and test X matrices (we do this in one step since some featurizers are stateful, e.g. counting words)
     :return: dictionary {'train_X': training matrix X, 'train_Y': vector of X labels, etc}
     """
-    train_X, test_X = featurizer(getX(train_data), getY(test_data))
+    train_X, test_X = featurizer(getX(train_data), getX(test_data))
     train_Y = getY(train_data)
     test_Y = getY(test_data)
     return {'train_X' : train_X, 'train_Y' : train_Y, 'test_X' : test_X, 'test_Y' : test_Y }
@@ -153,6 +155,23 @@ def tfIdfSkLearn(documents, vectorizer = None, **args):
     else:
         # apply existing one (which holds vocab etc)
         return (vectorizer, vectorizer.transform(documents))
+
+# n-gram features
+def nGramFeatures(documents, gramNumber = 2, vectorizer=None, **args):
+    # every sentence is a dictionary
+    tokenized_sents = [nltk.word_tokenize(document) for document in documents]
+   # print tokenized_sents
+    biFeaturedSentences = [nltk.ngrams(sentence, gramNumber) for sentence in tokenized_sents]
+   # print biFeaturedSentences
+    DictFeats = [dict(Counter(sentence)) for sentence in biFeaturedSentences]
+  #  print DictFeats
+    dicttofeats = DictVectorizer(**args)
+    if vectorizer == None:
+        # second set of features, arbitrary, encode as dictionary
+        return (dicttofeats, dicttofeats.fit_transform(DictFeats))
+    else:
+       # print DictFeats, "error happens"
+        return (vectorizer, vectorizer.transform(DictFeats))
 
 if __name__ == "__main__":
     print "Trivial example of feature creation and use"
