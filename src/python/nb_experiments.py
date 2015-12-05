@@ -20,16 +20,24 @@ wiki = clean_wiki.clean_wiki(wiki)
 # blog data
 blog = to_utf8(prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords=False))
 
+# Create various data splits
+tw = twitter_train + wiki
+tw_80, tw_20 = train_test_split(twitter_train + wiki, test_size = 0.2, random_state = 10)
+blog_80, blog_20 = train_test_split(blog, test_size = 0.2, random_state = 20)
+
+
+# Experiment wrappers
+def experiment(model_report, train, test, featurizer):
+    data = Features.make_experiment_matrices(train, test, featurizer)
+    return model_report(data['train_X'], data['train_Y'], data['test_X'], data['test_Y'])
 
 #### BernoulliNB experiments #######
 def experiment_bernoulli_nb(train, test, featurizer):
-    data = Features.make_experiment_matrices(train, test, featurizer)
-    return Models.report_BernoulliNB(data['train_X'], data['train_Y'], data['test_X'], data['test_Y'])
+    return experiment(Models.report_BernoulliNB, train, test, featurizer)
 
 #### GaussianNB experiments #######
 def experiment_gaussian_nb(train, test, featurizer):
-    data = Features.make_experiment_matrices(train, test, featurizer)
-    return Models.report_GaussianNB(data['train_X'], data['train_Y'], data['test_X'], data['test_Y'])
+    return experiment(Models.report_GaussianNB, train, test, featurizer)
 
 
 ##################### BernoulliNB + Binary word hasher ############################
@@ -39,16 +47,12 @@ def feat1(train, test):
     test_matrix = Features.bagOfWordsSkLearn(test)
     return train_matrix, test_matrix
 
-# Create various data splits
-tw = twitter_train + wiki
-tw_80, tw_20 = train_test_split(twitter_train + wiki, test_size = 0.2, random_state = 10)
-blog_80, blog_20 = train_test_split(blog, test_size = 0.2, random_state = 20)
 
 print "==============Experiment 1: BernoulliNB with bag of word features ============"
 # Twitter + Wiki (tw) -> Twitter + Wiki (tw)
 # Training on 80% tw
 # Testing on 20% tw
-print "TW(80) -> TW(20"
+print "TW(80) -> TW(20)"
 experiment1_tw = experiment_bernoulli_nb(tw_80, tw_20, feat1)
 # Training on 100% tw, testing on 100% blog
 print "TW(100) -> B(100)"
@@ -75,7 +79,7 @@ print "B(80) -> B(20)"
 experiment2_b = experiment_gaussian_nb(blog_80, blog_20, feat2)
 
 
-##################### GaussianNB + word counts ############################
+##################### GaussianNB + Tf IDF counts ############################
 def feat3(train, test):
     state_info, train_matrix = Features.tfIdfSkLearn(train)
     _, test_matrix = Features.wordCountsSkLearn(test, vectorizer = state_info)
@@ -83,21 +87,8 @@ def feat3(train, test):
 
 print "==============Experiment 3: GaussianNB with word count features ============"
 print "TW(100) -> B(100)"
-experiment3_twb = experiment_gaussian_nb(tw, blog, feat3)
+# TODO: fix hanging! Gaussian NB wants dense, but dense word counts for tw are crazy large
+# experiment3_twb = experiment_gaussian_nb(tw, blog, feat3)
 # Training on 80% blog, testing on 20% blog
 print "B(80) -> B(20)"
 experiment3_b = experiment_gaussian_nb(blog_80, blog_20, feat3)
-
-
-##################### GaussianNB + tf-idf ############################
-def feat4(train, test):
-    state_info, train_matrix = Features.tfIdfSkLearn(train)
-    _, test_matrix = Features.tfIdfSkLearn(test, vectorizer = state_info)
-    return train_matrix, test_matrix
-
-print "==============Experiment 4: GaussianNB with tf-idf features ============"
-print "TW(100) -> B(100)"
-experiment4_twb = experiment_gaussian_nb(tw, blog, feat4)
-# Training on 80% blog, testing on 20% blog
-print "B(80) -> B(20)"
-experiment4_b = experiment_gaussian_nb(blog_80, blog_20, feat4)
