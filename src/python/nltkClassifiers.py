@@ -131,7 +131,7 @@ def main(argv):
     print 'Classifier: ', classifierName
     print 'Feature: ', featureName
 
-    binarylabeledBlogData = prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'])
+    binarylabeledBlogData = prepareBlogData(Globals.BLOG_DATA)
  #   twitterTestingData = prepareTwitterData(Globals.TWITTER_TEST)
 
   #  allSentences = getX(emotionlabeledBlogData)

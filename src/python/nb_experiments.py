@@ -18,7 +18,7 @@ wiki = prepareWikiData(Globals.WIKI_TRAIN, splitwords= False)
 # clean wiki data
 wiki = clean_wiki.clean_wiki(wiki)
 # blog data
-blog = to_utf8(prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords=False))
+blog = to_utf8(prepareBlogData(Globals.BLOG_DATA, splitwords=False))
 
 # Create various data splits
 tw = twitter_train + wiki

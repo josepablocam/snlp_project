@@ -18,44 +18,27 @@ def readTwitterData(dataFile, splitwords = True):
             twitterSentences[i] = twitterSentences[i].split()
     return sentimentLabels, twitterSentences
 
-def readBlogData(labeledDataFile, sentencesFile, splitwords = True):
-    with open(labeledDataFile, "r") as f:
+def readBlogData(blogDataPath, splitwords = True):
+    with open(blogDataPath, "r") as f:
         dataList = [line.split() for line in f]
     f.close()
-    with open(sentencesFile, "r") as f2:
-        sentenceList = [line.split() for line in f2]
-    f2.close()
-    emotionLabels = []
-    emotionIndicators = []
-    blogSentences = []
-    for dataRecord in dataList:
-        emotionLabels.append(dataRecord[1])
-        emotionIndicators.append(dataRecord[3:len(dataRecord)])
-    for sentence in sentenceList:
-        blogSentences.append(sentence[1:len(sentence)])
-    return emotionLabels, blogSentences
-    
-    
-def prepareBlogData(blogLabelsPath, blogSentencePath, splitwords = True):
+    return [ (elem[2:], elem[0]) if splitwords else (" ".join(elem[2:]), elem[0]) for elem in dataList ]
+
+# read blog data using the original 7 emotion labels
+def prepareBlogDataWithEmotionLabel(blogDataPath, splitwords = True):
     """
-    Get blog data, if splitwords sentence = list of strings, else string
+    Get blog data, if splitwords sentence = list of strings, else string, label is original emotion label
     """
-    originalBlogData = []
-    blogDataForClassifier = [] # change all words to lowercase
-    blogDataLabels, blogDataSentences = readBlogData(blogLabelsPath, blogSentencePath, splitwords)
-    for i in range(len(blogDataLabels)):
-        originalBlogData.append((blogDataSentences[i], blogDataLabels[i]))
-    for (words, emotion) in originalBlogData:
-        if (emotion == 'ne'):
-            currentLabel = '0'
-        else:
-            currentLabel = '1'
-        words_filtered = [e.lower() for e in words]
-        if splitwords:
-            blogDataForClassifier.append((words_filtered, currentLabel))
-        else:
-            blogDataForClassifier.append((' '.join(words_filtered), currentLabel))
-    return blogDataForClassifier
+    data = readBlogData(blogDataPath, splitwords)
+    to_lower = (lambda x: [w.lower() for w in x]) if splitwords else (lambda x: x.lower())
+    return [ (to_lower(txt), label) for txt, label in data ]
+    
+def prepareBlogData(blogDataPath, splitwords = True):
+    """
+    Get blog data, if splitwords sentence = list of strings, else string, labele is 1 if emotional 0 if not emotional
+    """
+    observations = prepareBlogDataWithEmotionLabel(blogDataPath, splitwords)
+    return [ (txt, '0' if label == 'ne' else '1') for txt, label in observations ]
 
 
 def prepareTwitterData(twitterDataFile, splitwords = True):
@@ -105,24 +88,7 @@ def to_utf8(data):
             pass
     return clean_data
 
-# read blog data using the original 7 emotion labels
-def prepareBlogDataWithEmotionLabel(blogLabelsPath, blogSentencePath, splitwords = True):
-    """
-    Get blog data, if splitwords sentence = list of strings, else string
-    """
-    originalBlogData = []
-    blogDataForClassifier = [] # change all words to lowercase
-    blogDataLabels, blogDataSentences = readBlogData(blogLabelsPath, blogSentencePath, splitwords)
-    for i in range(len(blogDataLabels)):
-        originalBlogData.append((blogDataSentences[i], blogDataLabels[i]))
-    for (words, emotion) in originalBlogData:
 
-        words_filtered = [e.lower() for e in words]
-        if splitwords:
-            blogDataForClassifier.append((words_filtered, emotion))
-        else:
-            blogDataForClassifier.append((' '.join(words_filtered), emotion))
-    return blogDataForClassifier
 
 # read the twitter data using its original positive and negative labels
 def prepareTwitterDataWithPNLabel(twitterDataFile, splitwords = True):

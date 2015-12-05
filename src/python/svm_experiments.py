@@ -19,8 +19,8 @@ wiki = prepareWikiData(Globals.WIKI_TRAIN, splitwords= False)
 # clean wiki data
 wiki = clean_wiki.clean_wiki(wiki)
 # blog data
-blog = to_utf8(prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords=False))
-blog_emotion = to_utf8(prepareBlogDataWithEmotionLabel(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords=False))
+blog = to_utf8(prepareBlogData(Globals.BLOG_DATA, splitwords=False))
+blog_emotion = to_utf8(prepareBlogDataWithEmotionLabel(Globals.BLOG_DATA, splitwords=False))
 
 #### Linear SVM experiments #######
 def experiment_linear_svm(train, test, featurizer):

@@ -20,9 +20,9 @@ def experiment(train_set, test_set):
         elif train_set == 'twitter':
             allTrainingData = to_utf8(prepareTwitterDataWithPNLabel(Globals.TWITTER_TRAIN, splitwords = False))
         elif train_set == 'bi_blog':
-            allTrainingData = to_utf8(prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords = False))
+            allTrainingData = to_utf8(prepareBlogData(Globals.BLOG_DATA, splitwords = False))
         elif train_set == 'multi_blog':
-            allTrainingData = to_utf8(prepareBlogDataWithEmotionLabel(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords = False))
+            allTrainingData = to_utf8(prepareBlogDataWithEmotionLabel(Globals.BLOG_DATA, splitwords = False))
         else:
             print 'Error, no such data! Twitter data with Pos and Neg label will be used default dataset...'
             allTrainingData = to_utf8(prepareTwitterDataWithPNLabel(Globals.TWITTER_TRAIN, splitwords = False))
@@ -38,7 +38,7 @@ def experiment(train_set, test_set):
             trainingData = twitterEmotion + cleanedWiki
 
         elif train_set == "blog":
-            trainingData = to_utf8(prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords = False))
+            trainingData = to_utf8(prepareBlogData(Globals.BLOG_DATA, splitwords = False))
         elif train_set == 'twitter':
             trainingData = to_utf8(prepareTwitterData(Globals.TWITTER_TEST, splitwords = False))
 
@@ -51,12 +51,12 @@ def experiment(train_set, test_set):
             cleanedWiki = clean_wiki(wikiNoEmotion)
             testingData = twitterEmotion + cleanedWiki
         elif test_set == 'blog':
-            testingData = to_utf8(prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords = False))
+            testingData = to_utf8(prepareBlogData(Globals.BLOG_DATA, splitwords = False))
         elif test_set == 'twitter':
             testingData = to_utf8(prepareTwitterData(Globals.TWITTER_TEST, splitwords = False))
         else:
             print "Error: no such data! Blog data will be used as default testing set..."
-            testingData = to_utf8(prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords = False))
+            testingData = to_utf8(prepareBlogData(Globals.BLOG_DATA, splitwords = False))
 
       #  (trainingData, validationData) = train_test_split(allTrainingData, test_size = 0.2, random_state = 10)
 

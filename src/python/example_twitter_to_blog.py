@@ -29,7 +29,7 @@ def experiment():
     allTrainingData = twitterEmotion + wikiNoEmotion
     (trainingData, validationData) = train_test_split(allTrainingData, test_size = 0.2, random_state = 10)
     trainingData = allTrainingData
-    labeledBlogData = to_utf8(prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords = False))
+    labeledBlogData = to_utf8(prepareBlogData(Globals.BLOG_DATA, splitwords = False))
     
     # Featurize
     print "Featurizing"    
