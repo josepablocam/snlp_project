@@ -59,6 +59,11 @@ def report_GaussianNB(train_X, train_Y, test_X, test_Y):
     # Gaussian NB wants matrices to be dense
     return report_model(make_model, train_X.todense(), train_Y, test_X.todense(), test_Y, model_name)
 
+def report_MaxEnt(train_X, train_Y, test_X, test_Y, **args):
+    model_name = "MaxEnt"
+    make_model = lambda: LogisticRegression(**args) if args else LogisticRegression()
+    return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
+
 # def report_GaussianNB(train_X, train_Y, test_X, test_Y):
 #     # Naive Bayes model
 #     print "start naive training: ", time.asctime()
