@@ -48,7 +48,8 @@ with open(Globals.TWITTER_TEST_POS, 'w') as pos_file:
 twitter_temp_file.close()
 
 # Blog data
-blog = ReadData.readBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords = False)
+blog = ReadData.readBlogData(Globals.BLOG_DATA, splitwords = False)
+blog = [ txt for txt,label in blog ]
 blog_temp_file = write_temp(map(lambda x: " ".join(x), blog[1]))
 with open(Globals.BLOG_POS, 'w') as pos_file:
     tag(gate_cmd, Globals.GATE_PATH, blog_temp_file.name, pos_file)
