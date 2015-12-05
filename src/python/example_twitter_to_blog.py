@@ -28,6 +28,7 @@ def experiment():
     wikiNoEmotion = prepareWikiData(Globals.WIKI_TRAIN, splitwords = False)
     allTrainingData = twitterEmotion + wikiNoEmotion
     (trainingData, validationData) = train_test_split(allTrainingData, test_size = 0.2, random_state = 10)
+    trainingData = allTrainingData
     labeledBlogData = to_utf8(prepareBlogData(Globals.BLOG_DATA['annotations'], Globals.BLOG_DATA['sentences'], splitwords = False))
     
     # Featurize
@@ -46,7 +47,7 @@ def experiment():
     print "end naive training: ", time.asctime()
     nbClassifications1 = naiveClassifier.predict(test_set_X)
     print "Naive Bayes (Trained on 80% Twitter + Wiki), eval'ed on all blog"
-    print classification_report(nbClassifications1, test_set_Y)
+    print classification_report(test_set_Y, nbClassifications1)
     print "Accuracy: %f" % accuracy_score(test_set_Y, nbClassifications1) 
 
     # SVM model
@@ -56,7 +57,7 @@ def experiment():
     print "end svm  training: ", time.asctime()
     print "SVM (Trained on 80% Twitter + Wiki), eval'ed on all blog"
     svmClassifications = svmClassifier.predict(test_set_X)
-    print classification_report(svmClassifications, test_set_Y)
+    print classification_report(test_set_Y, svmClassifications)
     print "Accuracy: %f" % accuracy_score(test_set_Y, svmClassifications) 
     
 if __name__ == "__main__":
