@@ -11,7 +11,8 @@ from nltk.corpus import sentiwordnet as swn
 import re
 from collections import Counter
 
-
+# separates pos in a string
+POS_DELIM = "_"
 
 # Utilities
 def getX(data):
@@ -233,6 +234,50 @@ def valenceByFrequency(documents, vectorizer = None, cache_valence = None, **arg
     # just dividing for those with valence information can result in division by zero if no
     # words had valence info, whereas we likely want that to be (0, 0, 0)
     return vectorizer, sum_valences / total_cts
+
+
+def pos_in_txt(txt, pos):
+    """
+    Return true if text has POS taggin matching what was passed in
+    e.g. pos_in_txt(..., "jj") true for adjective or pos_in_text(..., "vb.*") for all verbs
+    pos tag sources
+    http://cs.nyu.edu/grishman/jet/guide/PennPOS.html
+    :param txt:
+    :param pos:
+    :return:
+    """
+    pos_regex = ".*_%s( |$)" % pos
+    return re.match(pos_regex, txt) != None
+
+
+def keyPOSNGrams(tagged_documents, key_pos, vectorizer = None, **args):
+    """
+    Vectorizer and  matrix with ngram counts for ngrams that include a relevant part of speech
+    Vectorizer's vocabulary mapping has been modified to solely contain relevant
+    ngrams as per POS
+    :param tagged_documents:
+    :param key_pos:
+    :param vectorizer:
+    :param args:
+    :return:
+
+    e.g.
+    tagged = [line.rstrip() for line in open(Globals.BLOG_POS, "r")]
+    vectorizer, cts = Features.keyPOSNGrams(tagged, ["jj.*", "vb.*"], ngram_range = (1, 2))
+    """
+    # count directly as is (so that columns will have word_pos counts)
+    vectorizer, cts = wordCountsSkLearn(tagged_documents, vectorizer, **args)
+    # now let's only consider columns that have relevant POS
+    relevant_ngrams = list()
+    for pos in key_pos:
+        relevant_ngrams += [ ngram for ngram in vectorizer.vocabulary_ if pos_in_txt(ngram, pos)]
+    # sort relevant ngrams to guarantee that the order is the same always if you apply an existing vectorizer
+    relevant_ngrams = sorted(list(set(relevant_ngrams)))
+    relevant_cols = [vectorizer.vocabulary_[ngram] for ngram in relevant_ngrams ]
+    ngram_matrix = cts[:, relevant_cols]
+    updated_ngram_mapping = dict(zip(relevant_ngrams, range(0, len(relevant_ngrams))))
+    vectorizer.vocabulary_ = updated_ngram_mapping
+    return vectorizer, ngram_matrix
 
 
 if __name__ == "__main__":
