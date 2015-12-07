@@ -7,10 +7,12 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import scipy.sparse
 import numpy
 import nltk
+from nltk.corpus import sentiwordnet as swn
 import re
 from collections import Counter
 
-
+# separates pos in a string
+POS_DELIM = "_"
 
 # Utilities
 def getX(data):
@@ -172,6 +174,111 @@ def nGramFeatures(documents, gramNumber = 2, vectorizer=None, **args):
     else:
        # print DictFeats, "error happens"
         return (vectorizer, vectorizer.transform(DictFeats))
+
+def avgSynsetScores(word, cache = None):
+    """
+    Calculate triple of (negative, objective, positive) for a given word. Each value is the
+    average of those scores for the words in the associated synset. Averaging is equally weighted
+    across elements
+    :param word:
+    :param cache: optional dictionary to cache lookups (suggested for large sets)
+    :return: triple of scores
+    """
+    # averages all words return with the lookup...this can certainly yield
+    # false positives
+    if cache != None and word in cache:
+        return cache[word]
+
+    pos, neg, obj, ct = 0.0, 0.0, 0.0, 0
+    for meaning in swn.senti_synsets(word):
+        pos += meaning.pos_score()
+        neg += meaning.neg_score()
+        obj += meaning.obj_score()
+        ct += 1
+    if ct > 0:
+        valence = (neg / ct, obj / ct, pos / ct)
+    else:
+        valence = (0.0, 0.0, 0.0)
+
+    if cache != None:
+        cache[word] = valence
+    return valence
+
+
+def valenceByFrequency(documents, vectorizer = None, cache_valence = None, **args):
+    """
+    Returns a matrix of ct(documents) x 3, column 0 is the negative score, 1 is objective score, 2 is positive score.
+    A score is calculated as the element-wise sum of the avgSynsetScore for each word in a comment
+    and divided by the total count of words in that comment.
+    :param documents:
+    :param vectorizer:
+    :param cache_valence: optionally cache word valence information for faster use later
+    :param args:
+    :return:
+    """
+    print "Count words in document"
+    vectorizer, cts = wordCountsSkLearn(documents, vectorizer, **args)
+    # now for each word in the vocabulary, retrieve a triple
+    # of the average negative, objective, positive scores
+    print "Calculating valence for words in vocabulary"
+    # sort it so that the rows match the column order
+    valence_data = sorted([(col, avgSynsetScores(word, cache_valence)) for word, col in vectorizer.vocabulary_.iteritems()])
+    valence_data = [valence for _, valence in valence_data]
+    valence_matrix = scipy.sparse.csr_matrix(valence_data)
+    # matrix multiplication will give us the sum of negative, objective, positive
+    # values for each observation
+    sum_valences = cts * valence_matrix
+    # count of words in each observation
+    total_cts = cts.sum(axis = 1)
+    # note that this normalizes by total count, not just counts with valence information
+    # just dividing for those with valence information can result in division by zero if no
+    # words had valence info, whereas we likely want that to be (0, 0, 0)
+    return vectorizer, sum_valences / total_cts
+
+
+def pos_in_txt(txt, pos):
+    """
+    Return true if text has POS taggin matching what was passed in
+    e.g. pos_in_txt(..., "jj") true for adjective or pos_in_text(..., "vb.*") for all verbs
+    pos tag sources
+    http://cs.nyu.edu/grishman/jet/guide/PennPOS.html
+    :param txt:
+    :param pos:
+    :return:
+    """
+    pos_regex = ".*_%s( |$)" % pos
+    return re.match(pos_regex, txt) != None
+
+
+def keyPOSNGrams(tagged_documents, key_pos, vectorizer = None, **args):
+    """
+    Vectorizer and  matrix with ngram counts for ngrams that include a relevant part of speech
+    Vectorizer's vocabulary mapping has been modified to solely contain relevant
+    ngrams as per POS
+    :param tagged_documents:
+    :param key_pos:
+    :param vectorizer:
+    :param args:
+    :return:
+
+    e.g.
+    tagged = [line.rstrip() for line in open(Globals.BLOG_POS, "r")]
+    vectorizer, cts = Features.keyPOSNGrams(tagged, ["jj.*", "vb.*"], ngram_range = (1, 2))
+    """
+    # count directly as is (so that columns will have word_pos counts)
+    vectorizer, cts = wordCountsSkLearn(tagged_documents, vectorizer, **args)
+    # now let's only consider columns that have relevant POS
+    relevant_ngrams = list()
+    for pos in key_pos:
+        relevant_ngrams += [ ngram for ngram in vectorizer.vocabulary_ if pos_in_txt(ngram, pos)]
+    # sort relevant ngrams to guarantee that the order is the same always if you apply an existing vectorizer
+    relevant_ngrams = sorted(list(set(relevant_ngrams)))
+    relevant_cols = [vectorizer.vocabulary_[ngram] for ngram in relevant_ngrams ]
+    ngram_matrix = cts[:, relevant_cols]
+    updated_ngram_mapping = dict(zip(relevant_ngrams, range(0, len(relevant_ngrams))))
+    vectorizer.vocabulary_ = updated_ngram_mapping
+    return vectorizer, ngram_matrix
+
 
 if __name__ == "__main__":
     print "Trivial example of feature creation and use"
