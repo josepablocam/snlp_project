@@ -74,19 +74,27 @@ def prepareWikiData(wikiDataFile, splitwords = True):
     return labeledData
     
 
-def to_utf8(data):
+def to_utf8(data, return_indices = False):
     """
-    Decode as utf8, throws out elements that don't conform
+    Decode as utf8, throws out elements that don't conform, If return_indices == True, returns indices instead
+    of observations (useful to line up other pieces of information)
     """
     clean_data = []
     decode = lambda x: (x[0].decode('utf-8'), x[1]) if isinstance(x, tuple) else x.decode('utf-8')
-    for obs in data:
+    indices = []
+    n = len(data)
+    for i in range(n):
+        obs = data[i]
         try:
             clean_obs = decode(obs)
             clean_data.append(clean_obs)
+            indices.append(i)
         except UnicodeDecodeError:
             pass
-    return clean_data
+    if return_indices:
+        return indices
+    else:
+        return clean_data
 
 
 
