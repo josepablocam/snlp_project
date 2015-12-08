@@ -285,6 +285,21 @@ def keyPOSNGrams(tagged_documents, key_pos, vectorizer = None, **args):
     return vectorizer, ngram_matrix
 
 
+def punctuation(documents, puncts = None, vectorizer = None, **kwargs):
+    # default punctuation to look for
+    print "Calculating punctuation features"
+    puncts = puncts if puncts else ['?', '!', '...']
+    results = []
+    for document in documents:
+        doc_results = [ ("has_%s" % punct, punct in document) for punct in puncts ]
+        results.append(dict(doc_results))
+    if vectorizer == None:
+        vectorizer = DictVectorizer()
+        return vectorizer, vectorizer.fit_transform(results)
+    else:
+        return vectorizer, vectorizer.transform(results)
+
+
 if __name__ == "__main__":
     print "Trivial example of feature creation and use"
     import Models
