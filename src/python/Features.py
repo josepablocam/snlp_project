@@ -197,6 +197,8 @@ def avgSynsetScores(word, cache = None):
         ct += 1
     if ct > 0:
         valence = (neg / ct, obj / ct, pos / ct)
+        if numpy.isnan(valence).any():
+            ValueError("NaN Valence for %s" % word)
     else:
         valence = (0.0, 0.0, 0.0)
 
@@ -230,6 +232,9 @@ def valenceByFrequency(documents, vectorizer = None, cache_valence = None, **arg
     sum_valences = cts * valence_matrix
     # count of words in each observation
     total_cts = cts.sum(axis = 1)
+    # replace zero counts with 1 to avoid NaN. We can have zero count
+    # if a tweet is determined to be all stopwords
+    total_cts[total_cts == 0.0] = 1.0
     # note that this normalizes by total count, not just counts with valence information
     # just dividing for those with valence information can result in division by zero if no
     # words had valence info, whereas we likely want that to be (0, 0, 0)
