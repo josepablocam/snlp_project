@@ -80,7 +80,9 @@ def to_utf8(data, return_indices = False):
     of observations (useful to line up other pieces of information)
     """
     clean_data = []
-    decode = lambda x: (x[0].decode('utf-8'), x[1]) if isinstance(x, tuple) else x.decode('utf-8')
+    # can run into UnicodeEncodeError if you try to decode something that is already unicode
+    safe_decode = lambda x: x if isinstance(x, unicode) else x.decode('utf-8')
+    decode = lambda x: (safe_decode(x[0]), x[1]) if isinstance(x, tuple) else x.decode('utf-8')
     indices = []
     n = len(data)
     for i in range(n):
