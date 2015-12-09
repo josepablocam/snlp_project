@@ -1,3 +1,5 @@
 papers
 data
 lib
+*.pyc
+bin
