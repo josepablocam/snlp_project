@@ -9,6 +9,8 @@ from sklearn.lda import LDA
 from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.mixture.gmm import GMM
 from scipy.sparse import issparse
+from sklearn.metrics import confusion_matrix
+import numpy
 
 def report_performance(gold, predicted):
     """
@@ -113,7 +115,40 @@ def report_GMM(train_X, train_Y, test_X, test_Y):
     make_model = lambda: GMM()
     return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
 
-def report_LogisticReg(train_X, train_Y, test_X, test_Y):
-    model_name = "Logistic Regression Classifier"
-    make_model = lambda: LogisticRegression()
-    return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
+# Covered by report_MaxEnt above
+# def report_LogisticReg(train_X, train_Y, test_X, test_Y):
+#     model_name = "Logistic Regression Classifier"
+#     make_model = lambda: LogisticRegression()
+#     return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
+
+def extended_predict(trained_model, test_X, test_Y):
+    """
+    Predict with a model and extend predictions with probability info
+    :param trained_model:
+    :param test_X:
+    :param test_Y:
+    :return: list of triples (observed Y, predicted Y, probability assigned by model)
+    """
+    predictions = trained_model.predict(test_X)
+    probabilities = trained_model.predict_proba(test_X).max(axis = 1)
+    return zip(test_Y, predictions, probabilities)
+
+
+def error_analysis(predicted_tuples, labels = None):
+    """
+    Some basic error reporting for analysis
+    :param predicted_tuples: triples of (observed, predicted, probability for predicted)
+    :return: dictionary with confusion matrix, histogram of error confidence and
+    tuples of indices of errors and confidence, sorted in descending order by confidence (want worse errors first)
+    """
+    # confusion matrix
+    y_true, y_pred, probs = map(list, zip(*predicted_tuples))
+    conf_matrix = confusion_matrix(y_true, y_pred, labels = labels)
+    # indices for errors
+    error_indices = [i for i, (obs, pred, _) in enumerate(predicted_tuples) if obs != pred]
+    # distribution of probabilities for errors
+    error_probs = numpy.array(probs)[error_indices]
+    error_conf_dist = numpy.histogram(error_probs)
+    # extend error index info with probabilites and sort by descending probability (i.e. want worse errors first)
+    ext_error_indices = sorted(zip(error_indices, error_probs), key = lambda x: -x[1])
+    return {'confusion_matrix': conf_matrix, 'error_conf_dist': error_conf_dist, 'error_indices': ext_error_indices}
