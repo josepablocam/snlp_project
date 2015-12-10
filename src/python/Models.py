@@ -8,6 +8,7 @@ from sklearn import svm
 from sklearn.lda import LDA
 from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.mixture.gmm import GMM
+from scipy.sparse import issparse
 
 def report_performance(gold, predicted):
     """
@@ -57,7 +58,11 @@ def report_GaussianNB(train_X, train_Y, test_X, test_Y):
     model_name = "Gaussian Naive Bayes"
     make_model = lambda: GaussianNB()
     # Gaussian NB wants matrices to be dense
-    return report_model(make_model, train_X.todense(), train_Y, test_X.todense(), test_Y, model_name)
+    if issparse(train_X):
+        train_X = train_X.todense()
+    if issparse(test_X):
+        test_X = test_X.todense()
+    return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
 
 def report_MaxEnt(train_X, train_Y, test_X, test_Y, **args):
     model_name = "MaxEnt"
