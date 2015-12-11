@@ -171,7 +171,7 @@ def extended_predict(trained_model, test_X, test_Y):
     return zip(test_Y, predictions, probabilities)
 
 
-def error_analysis(predicted_tuples, labels = None):
+def error_analysis(predicted_tuples, labels = None, bins = None):
     """
     Some basic error reporting for analysis
     :param predicted_tuples: triples of (observed, predicted, probability for predicted)
@@ -184,8 +184,10 @@ def error_analysis(predicted_tuples, labels = None):
     # indices for errors
     error_indices = [i for i, (obs, pred, _) in enumerate(predicted_tuples) if obs != pred]
     # distribution of probabilities for errors
+    # set default to 10 (as numpy does, i.e. pick bins on it's own)
+    bins = 10 if not bins else bins
     error_probs = numpy.array(probs)[error_indices]
-    error_conf_dist = numpy.histogram(error_probs)
+    error_conf_dist = numpy.histogram(error_probs, bins = bins)
     # extend error index info with probabilites and sort by descending probability (i.e. want worse errors first)
     ext_error_indices = sorted(zip(error_indices, error_probs), key = lambda x: -x[1])
     return {'confusion_matrix': conf_matrix, 'error_conf_dist': error_conf_dist, 'error_indices': ext_error_indices}

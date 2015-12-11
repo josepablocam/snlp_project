@@ -1,0 +1,30 @@
+Blog->Blog Test Perf
+             precision    recall  f1-score   support
+
+          0       0.76      0.95      0.84       543
+          1       0.79      0.40      0.53       275
+
+avg / total       0.77      0.76      0.74       818
+
+Accuracy: 0.762836
+
+Twitter+Wiki->Blog Test Perf
+             precision    recall  f1-score   support
+
+          0       0.79      0.59      0.68       543
+          1       0.46      0.68      0.55       275
+
+avg / total       0.68      0.62      0.63       818
+
+Accuracy: 0.622249
+
+Twitter+Wiki->Twitter Test Perf
+             precision    recall  f1-score   support
+
+          0       0.33      0.04      0.06       139
+          1       0.72      0.97      0.83       359
+
+avg / total       0.61      0.71      0.62       498
+
+Accuracy: 0.710843
+
