@@ -5,11 +5,20 @@ import Features
 import clean_wiki
 import Models
 from sklearn.cross_validation import train_test_split
-from sklearn.cross_validation import KFold
-from sklearn.metrics import accuracy_score
 from sklearn.linear_model.logistic import LogisticRegression
-import numpy
+import sys
 
+# writing to results file
+out_path = sys.argv[1]
+out_file = open(out_path, "w")
+
+def write_cv(f, details, acc_and_err):
+    f.write(details + "\n")
+    f.write("accuracy:%f\nstd-error:%f\n\n" % acc_and_err)
+
+def write_detailed(f, details, report):
+    f.write(details + "\n")
+    f.write(report + "\n\n")
 
 def get_elems_at(src, indices):
     return to_utf8([src[i] for i in indices])
@@ -64,7 +73,10 @@ def experiment(model_report, train, test, featurizer):
 
 #### MaxEnt experiments #######
 def experiment_maxent(train, test, featurizer):
-    return experiment(Models.report_LogisticReg, train, test, featurizer)
+    return experiment(Models.report_MaxEnt, train, test, featurizer)
+
+# create maxent model
+maxent_model = lambda : Models.LogisticRegression()
 
 # Feature-Set 1 - averaged sentiment valence
 cache_valence = dict()
@@ -73,12 +85,16 @@ def feat1(train, test):
     _, test_matrix = Features.valenceByFrequency(test, vectorizer = vectorizer, cache_valence = cache_valence, stop_words = 'english')
     return train_matrix, test_matrix
 
-print "=>Experiment 1: valence blog(80%) -> blog(20%)"
-experiment1_b = experiment_maxent(blog_80, blog_20, feat1)
-print "=>Experiment 1: valence twitter+wiki -> blog"
-experiment1_twb = experiment_maxent(tw, blog, feat1)
-print "=>Experiment 1: valence twitter+wiki -> twitter(test)"
-experiment1_tw = experiment_maxent(tw, twitter_test, feat1)
+print "=>Experiment 1: valence blog(80%) -> blog(80%) CV-10"
+experiment1_b = Models.model_cv(maxent_model, blog_80, feat1, n_folds = 10)
+print "=>Experiment 1: valence twitter+wiki -> blog(80%)"
+experiment1_twb = experiment_maxent(tw, blog_80, feat1)
+print "=>Experiment 1: valence twitter+wiki -> twitter+wiki CV-5"
+experiment1_tw = Models.model_cv(maxent_model, tw, feat1, n_folds = 5)
+
+write_cv(out_file, "experiment 1 b", experiment1_b)
+write_detailed(out_file, "experiment 1 twb", experiment1_twb)
+write_cv(out_file, "experiment 1 tw", experiment1_tw)
 
 
 # Feature set 2 - tf-idf
@@ -87,12 +103,16 @@ def feat2(train, test):
     _, test_matrix = Features.wordCountsSkLearn(test, vectorizer = state_info, stop_words = 'english')
     return train_matrix, test_matrix
 
-print "=>Experiment 2: tf-idf blog(80%) -> blog(20%)"
-experiment2_b = experiment_maxent(blog_80, blog_20, feat2)
-print "=>Experiment 2: tf-idf twitter+wiki -> blog"
-experiment2_twb = experiment_maxent(tw, blog, feat2)
-print "=>Experiment 2: tf-idf twitter+wiki -> twitter(test)"
-experiment2_tw = experiment_maxent(tw, twitter_test, feat2)
+print "=>Experiment 2: tf-idf blog(80%) -> blog(80%) CV-10"
+experiment2_b = Models.model_cv(maxent_model, blog_80, feat2, n_folds = 10)
+print "=>Experiment 2: tf-idf twitter+wiki -> blog(80%)"
+experiment2_twb = experiment_maxent(tw, blog_80, feat2)
+print "=>Experiment 2: tf-idf twitter+wiki -> twitter+wiki CV-5"
+experiment2_tw = Models.model_cv(maxent_model, tw, feat2, n_folds = 5)
+
+write_cv(out_file, "experiment 2 b", experiment2_b)
+write_detailed(out_file, "experiment 2 twb", experiment2_twb)
+write_cv(out_file, "experiment 2 tw", experiment2_tw)
 
 # avg sentiment and tf-idf
 def feat3(train, test):
@@ -105,12 +125,16 @@ def feat3(train, test):
     test_matrix = Features.append_features([test_valence, test_cts])
     return train_matrix, test_matrix
 
-print "=>Experiment 3: valence + tf-idf blog(80%) -> blog(20%)"
-experiment3_b = experiment_maxent(blog_80, blog_20, feat3)
-print "=>Experiment 3: valence + tf-idf twitter+wiki -> blog"
-experiment3_twb = experiment_maxent(tw, blog, feat3)
-print "=>Experiment 3: valence + tf-idf twitter+wiki -> twitter(test)"
-experiment3_tw = experiment_maxent(tw, twitter_test, feat3)
+print "=>Experiment 3: valence + tf-idf blog(80%) -> blog(80%) CV-10"
+experiment3_b = Models.model_cv(maxent_model, blog_80, feat3, n_folds = 10)
+print "=>Experiment 3: valence + tf-idf twitter+wiki -> blog (80%)"
+experiment3_twb = experiment_maxent(tw, blog_80, feat3)
+print "=>Experiment 3: valence + tf-idf twitter+wiki -> twitter+wiki CV-5"
+experiment3_tw = Models.model_cv(maxent_model, tw, feat3, n_folds = 5)
+
+write_cv(out_file, "experiment 3 b", experiment3_b)
+write_detailed(out_file, "experiment 3 twb", experiment3_twb)
+write_cv(out_file, "experiment 3 tw", experiment3_tw)
 
 # feature set 3 and punctuation
 def feat4(train, test):
@@ -123,12 +147,16 @@ def feat4(train, test):
     test_matrix = Features.append_features([test_f3, test_punct])
     return train_matrix, test_matrix
 
-print "=>Experiment 4: valence + tf-idf + punctuation blog(80%) -> blog(20%)"
-experiment4_b = experiment_maxent(blog_80, blog_20, feat4)
-print "=>Experiment 4: valence + tf-idf + punctuation twitter+wiki -> blog"
-experiment4_twb = experiment_maxent(tw, blog, feat4)
-print "=>Experiment 4: valence + tf-idf + punctuation twitter+wiki -> twitter(test)"
-experiment4_tw = experiment_maxent(tw, twitter_test, feat4)
+print "=>Experiment 4: valence + tf-idf + punctuation blog(80%) -> blog(80%) CV-10"
+experiment4_b = Models.model_cv(maxent_model, blog_80, feat4, n_folds = 10)
+print "=>Experiment 4: valence + tf-idf + punctuation twitter+wiki -> blog(80%)"
+experiment4_twb = experiment_maxent(tw, blog_80, feat4)
+print "=>Experiment 4: valence + tf-idf + punctuation twitter+wiki -> twitter+wiki CV-5"
+experiment4_tw = Models.model_cv(maxent_model, tw, feat4, n_folds = 5)
+
+write_cv(out_file, "experiment 4 b", experiment4_b)
+write_detailed(out_file, "experiment 4 twb", experiment4_twb)
+write_cv(out_file, "experiment 4 tw", experiment4_tw)
 
 # Just word valence and punctuation
 def feat5(train, test):
@@ -139,55 +167,48 @@ def feat5(train, test):
     test_matrix = Features.append_features([test_valence, test_punct])
     return train_matrix, test_matrix
 
-print "=>Experiment 5: valence + punctuation blog(80%) -> blog(20%)"
-experiment5_b = experiment_maxent(blog_80, blog_20, feat5)
-print "=>Experiment 5: valence + punctuation twitter+wiki -> blog"
-experiment5_twb = experiment_maxent(tw, blog, feat5)
-print "=>Experiment 5: valence + punctuation twitter+wiki -> twitter(test)"
-experiment5_tw = experiment_maxent(tw, twitter_test, feat5)
+print "=>Experiment 5: valence + punctuation blog(80%) -> blog(80%) CV-10"
+experiment5_b = Models.model_cv(maxent_model, blog_80, feat5, n_folds = 10)
+print "=>Experiment 5: valence + punctuation twitter+wiki -> blog(80%)"
+experiment5_twb = experiment_maxent(tw, blog_80, feat5)
+print "=>Experiment 5: valence + punctuation twitter+wiki -> twitter+wiki CV-5"
+experiment5_tw = Models.model_cv(maxent_model, tw, feat5, n_folds = 5)
 
+write_cv(out_file, "experiment 5 b", experiment5_b)
+write_detailed(out_file, "experiment 5 twb", experiment5_twb)
+write_cv(out_file, "experiment 5 tw", experiment5_tw)
 
-## valence, punctuation and relevant POS counts
-# Being sloppy for now and have a function per experiment set... we can clean this up later
-def feat6_generic(train, test, train_pos, test_pos):
-    train_f5, test_f5 = feat5(train, test)
+# Valence + punctuation + tf-idf for words with a relevant POS
+def feat6(train, test):
+    normal_train, train_pos = map(list, zip(*train))
+    normal_test, test_pos = map(list, zip(*test))
+    train_f5, test_f5 = feat5(normal_train, normal_test)
     cter, train_cts = Features.keyPOSNGrams(train_pos, ["jj.*", "vb.*"], tf_idf = True)
     _, test_cts = Features.keyPOSNGrams(test_pos, ["jj.*", "vb.*"], vectorizer = cter, tf_idf= True)
     train_matrix = Features.append_features([train_f5, train_cts])
     test_matrix = Features.append_features([test_f5, test_cts])
     return train_matrix, test_matrix
 
-# a function per experiment set...ugly sorry :(
-def feat6_b():
-    return lambda train, test: feat6_generic(train, test, blog_80_pos, blog_20_pos)
-def feat6_tw_b():
-    return lambda train, test: feat6_generic(train, test, tw_pos, blog_pos)
-def feat6_tw():
-    return lambda train, test: feat6_generic(train, test, tw_pos, twitter_test_pos)
+def combine_with_pos(labeled, with_pos):
+    return [((txt, pos_txt), label) for (txt,label),pos_txt in zip(labeled, with_pos)]
 
 
-print "Experiment 6: valence + punctuation + key POS word counts blog(80%) -> blog(20%)"
-experiment6_b = experiment_maxent(blog_80, blog_20, feat6_b())
+print "Experiment 6: valence + punctuation + key POS word counts blog(80%) -> blog(80%) CV-10"
+experiment6_b = Models.model_cv(maxent_model, combine_with_pos(blog_80, blog_80_pos), feat6, n_folds = 10)
 print "Experiment 6: valence + punctuation + key POS word counts twitter+wiki -> blog"
-experiment6_twb = experiment_maxent(tw, blog, feat6_tw_b())
+experiment6_twb = experiment_maxent(combine_with_pos(tw, tw_pos), combine_with_pos(blog_80, blog_80_pos), feat6)
 print "Experiment 6: valence + punctuation + key POS word counts twitter+wiki -> twitter(test)"
-experiment6_tw = experiment_maxent(tw, twitter_test, feat6_tw())
+experiment6_tw = Models.model_cv(maxent_model, combine_with_pos(tw, tw_pos), feat6, n_folds = 5)
+
+write_cv(out_file, "experiment 6 b", experiment6_b)
+write_detailed(out_file, "experiment 6 twb", experiment6_twb)
+write_cv(out_file, "experiment 6 tw", experiment6_tw)
 
 
 # Cross validation for blog -> blog experiment with best accuracy (to compare to original paper)
-folds = KFold(n = len(blog), n_folds= 10, random_state = 1)
-test_accuracies = []
-for train_indices, test_indices in folds:
-    train_data = get_elems_at(blog, train_indices)
-    test_data = get_elems_at(blog, test_indices)
-    data = Features.make_experiment_matrices(train_data, test_data, feat4)
-    model = LogisticRegression()
-    model.fit(data['train_X'], data['train_Y'])
-    predictions = model.predict(data['test_X'])
-    accuracy = accuracy_score(data['test_Y'], predictions)
-    test_accuracies.append(accuracy)
+paper_comp = Models.model_cv(lambda : LogisticRegression(), blog, feat4, random_state = 1)
+print "[Paper Comparison] CV-10 accuracy blog on blog:%.2f[+/-%.2f]" % paper_comp
 
+write_cv(out_file, "paper comparison b", paper_comp)
 
-print "10-CV accuracy blog on blog:%.2f[+/-%.2f]" % (numpy.mean(test_accuracies), numpy.std(test_accuracies))
-
-
+out_file.close()

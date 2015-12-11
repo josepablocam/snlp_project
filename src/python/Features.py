@@ -21,13 +21,15 @@ def getX(data):
 def getY(data):
     return [obs[1] for obs in data]
 
-def make_experiment_matrices(train_data, test_data, featurizer):
+def make_experiment_matrices(train_data, test_data, featurizer, getX = getX, getY = getY):
     """
     Returns dictionary of experiment matrices and label vectors
     :param train_data: training data (tuples of observation and label)
     :param test_data: test data (tuples of observation and label)
     :param featurizer: function that takes train_data and test_data and returns 2 matrices (tuple) of training
     and test X matrices (we do this in one step since some featurizers are stateful, e.g. counting words)
+    :param getX: function to extract X (default: Features.getX)
+    :param getY: function to extract Y (default: Features.getY)
     :return: dictionary {'train_X': training matrix X, 'train_Y': vector of X labels, etc}
     """
     train_X, test_X = featurizer(getX(train_data), getX(test_data))
