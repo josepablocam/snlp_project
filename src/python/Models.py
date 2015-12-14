@@ -10,7 +10,7 @@ from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.mixture.gmm import GMM
 from scipy.sparse import issparse
 from sklearn.metrics import confusion_matrix
-from sklearn.cross_validation import KFold
+from sklearn.cross_validation import KFold, StratifiedKFold
 import numpy
 import Features
 
@@ -123,7 +123,7 @@ def report_GMM(train_X, train_Y, test_X, test_Y):
 #     make_model = lambda: LogisticRegression()
 #     return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
 
-def model_cv(make_model, data, featurizer, n_folds = 10, random_state = 1, getX = Features.getX, getY = Features.getY, **kwargs):
+def model_cv(make_model, data, featurizer, n_folds = 10, random_state = 1, getX = Features.getX, getY = Features.getY, stratified = False, **kwargs):
     """
     Run cross validation given a functino to create model, data, function to create features
     :param make_model: lambda (no-args) to create model (called once per fold)
@@ -139,7 +139,10 @@ def model_cv(make_model, data, featurizer, n_folds = 10, random_state = 1, getX 
     """
     nobs = len(data)
     cv_accuracies = []
-    folds = KFold(n = nobs, n_folds= n_folds, random_state = random_state, **kwargs)
+    if stratified:
+        folds = StratifiedKFold(getY(data), n_folds = n_folds, random_state = random_state, **kwargs)
+    else:
+        folds = KFold(n = nobs, n_folds= n_folds, random_state = random_state, **kwargs)
     get_elems_at = lambda vals, indices: [vals[i] for i in indices]
     for fold_id, (train_indices, test_indices) in enumerate(folds):
         print "Running fold %d" % fold_id
