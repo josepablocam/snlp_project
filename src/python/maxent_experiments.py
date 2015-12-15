@@ -263,8 +263,8 @@ def literature_comp(out_file):
     t_maxent = experiment_maxent(t_training_granular, t_test_no_neutral, feat4)
     # just bigram counts...cannot get the performance report in the presentation
     t_extra = experiment_maxent(t_training_granular, t_test_no_neutral, extra_features)
-    write_cv(out_file, "twitter ME feature 4 test results", t_maxent)
-    write_cv(out_file, "twitter ME extra (uni+bi+valence+punct) test results", t_extra)
+    write_detailed(out_file, "twitter ME feature 4 test results", t_maxent)
+    write_detailed(out_file, "twitter ME extra (uni+bi+valence+punct) test results", t_extra)
 
 
 
@@ -280,6 +280,8 @@ def main(action, out_path):
         error_analysis()
     elif action == "test_perf":
         test_perf(out_file)
+    elif action == "lit_comp":
+        literature_comp(out_file)
     else:
         raise ValueError("Unspecified action: %s" % action)
 
