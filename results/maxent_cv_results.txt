@@ -1,8 +1,8 @@
-experiment 1 b
+==>Experiment 1: valence b
 accuracy:0.715757
 std-error:0.021174
 
-experiment 1 twb
+==>Experiment 1: valence twb
              precision    recall  f1-score   support
 
           0       0.84      0.49      0.62      2257
@@ -12,69 +12,69 @@ avg / total       0.70      0.58      0.59      3272
 
 Accuracy: 0.581296
 
-experiment 1 tw
+==>Experiment 1: valence tw
 accuracy:0.533613
 std-error:0.094185
 
-experiment 2 b
-accuracy:0.748460
-std-error:0.018932
+==>Experiment 2: tf-idf b
+accuracy:0.768937
+std-error:0.022342
 
-experiment 2 twb
+==>Experiment 2: tf-idf twb
              precision    recall  f1-score   support
 
-          0       0.80      0.24      0.37      2257
-          1       0.34      0.87      0.49      1015
+          0       0.82      0.24      0.37      2257
+          1       0.34      0.88      0.50      1015
 
-avg / total       0.66      0.43      0.40      3272
-
-Accuracy: 0.433374
-
-experiment 2 tw
-accuracy:0.973049
-std-error:0.003473
-
-experiment 3 b
-accuracy:0.764657
-std-error:0.020623
-
-experiment 3 twb
-             precision    recall  f1-score   support
-
-          0       0.80      0.25      0.38      2257
-          1       0.34      0.86      0.49      1015
-
-avg / total       0.66      0.44      0.42      3272
+avg / total       0.67      0.44      0.41      3272
 
 Accuracy: 0.441320
 
-experiment 3 tw
-accuracy:0.972725
-std-error:0.001844
+==>Experiment 2: tf-idf tw
+accuracy:0.961553
+std-error:0.006714
 
-experiment 4 b
-accuracy:0.766186
-std-error:0.023025
+==>Experiment 3: valence + tf-idf b
+accuracy:0.777190
+std-error:0.019306
 
-experiment 4 twb
+==>Experiment 3: valence + tf-idf twb
              precision    recall  f1-score   support
 
-          0       0.80      0.27      0.41      2257
-          1       0.34      0.85      0.49      1015
+          0       0.84      0.27      0.40      2257
+          1       0.35      0.88      0.50      1015
 
-avg / total       0.66      0.45      0.43      3272
+avg / total       0.69      0.46      0.43      3272
 
-Accuracy: 0.450795
+Accuracy: 0.457213
 
-experiment 4 tw
-accuracy:0.975983
-std-error:0.000397
+==>Experiment 3: valence + tf-idf tw
+accuracy:0.960546
+std-error:0.003499
 
-experiment 5 b
+==>Experiment 4: valence + tf-idf + punctuation b
+accuracy:0.779024
+std-error:0.020512
+
+==>Experiment 4: valence + tf-idf + punctuation twb
+             precision    recall  f1-score   support
+
+          0       0.82      0.29      0.43      2257
+          1       0.35      0.86      0.50      1015
+
+avg / total       0.67      0.47      0.45      3272
+
+Accuracy: 0.467298
+
+==>Experiment 4: valence + tf-idf + punctuation tw
+accuracy:0.966126
+std-error:0.002019
+
+==>Experiment 5: valence + punctuation b
 accuracy:0.715758
 std-error:0.027637
 
-experiment 5 twb
+==>Experiment 5: valence + punctuation twb
              precision    recall  f1-score   support
 
           0       0.81      0.59      0.68      2257
@@ -84,15 +84,15 @@ avg / total       0.69      0.62      0.63      3272
 
 Accuracy: 0.619499
 
-experiment 5 tw
+==>Experiment 5: valence + punctuation tw
 accuracy:0.686481
 std-error:0.038899
 
-experiment 6 b
+==>Experiment 6: valence + punctuation + key POS word counts b
 accuracy:0.750596
 std-error:0.025388
 
-experiment 6 twb
+==>Experiment 6: valence + punctuation + key POS word counts twb
              precision    recall  f1-score   support
 
           0       0.86      0.28      0.42      2257
@@ -102,11 +102,29 @@ avg / total       0.71      0.47      0.45      3272
 
 Accuracy: 0.471577
 
-experiment 6 tw
-accuracy:0.921693
-std-error:0.001813
+==>Experiment 6: valence + punctuation + key POS word counts tw
+accuracy:0.921695
+std-error:0.001812
 
-paper comparison b
-accuracy:0.762836
-std-error:0.044213
+==>Experiment 7: valence + punctuation + key POS uni/bigram counts b
+accuracy:0.742348
+std-error:0.020115
+
+==>Experiment 7: valence + punctuation + key POS uni/bigram counts twb
+             precision    recall  f1-score   support
+
+          0       0.84      0.24      0.38      2257
+          1       0.35      0.90      0.50      1015
+
+avg / total       0.69      0.45      0.41      3272
+
+Accuracy: 0.445905
+
+==>Experiment 7: valence + punctuation + key POS uni/bigram counts tw
+accuracy:0.940510
+std-error:0.002351
+
+===> Paper comparison: CV-10 accuracy blog on blog b
+accuracy:0.779024
+std-error:0.020512
 
