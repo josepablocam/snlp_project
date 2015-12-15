@@ -71,8 +71,8 @@ def feat1(train, test):
 
 # Feature set 2 - tf-idf
 def feat2(train, test):
-    state_info, train_matrix = Features.tfIdfSkLearn(train)
-    _, test_matrix = Features.wordCountsSkLearn(test, vectorizer = state_info, stop_words = 'english')
+    state_info, train_matrix = Features.tfIdfSkLearn(train, stop_words = "english")
+    _, test_matrix = Features.tfIdfSkLearn(test, vectorizer = state_info, stop_words = 'english')
     return train_matrix, test_matrix
 
 # avg sentiment and tf-idf
@@ -111,8 +111,8 @@ def feat6(train, test):
     normal_train, train_pos = map(list, zip(*train))
     normal_test, test_pos = map(list, zip(*test))
     train_f5, test_f5 = feat5(normal_train, normal_test)
-    cter, train_cts = Features.keyPOSNGrams(train_pos, ["jj.*", "vb.*"], tf_idf = True)
-    _, test_cts = Features.keyPOSNGrams(test_pos, ["jj.*", "vb.*"], vectorizer = cter, tf_idf= True)
+    cter, train_cts = Features.keyPOSNGrams(train_pos, ["jj.*", "vb.*"], tf_idf = True, stop_words = 'english')
+    _, test_cts = Features.keyPOSNGrams(test_pos, ["jj.*", "vb.*"], vectorizer = cter, tf_idf= True, stop_words = 'english')
     train_matrix = Features.append_features([train_f5, train_cts])
     test_matrix = Features.append_features([test_f5, test_cts])
     return train_matrix, test_matrix
@@ -122,8 +122,8 @@ def feat7(train, test):
     normal_train, train_pos = map(list, zip(*train))
     normal_test, test_pos = map(list, zip(*test))
     train_f5, test_f5 = feat5(normal_train, normal_test)
-    cter, train_cts = Features.keyPOSNGrams(train_pos, ["jj.*", "vb.*"], tf_idf = True, ngram_range = (1, 2))
-    _, test_cts = Features.keyPOSNGrams(test_pos, ["jj.*", "vb.*"], vectorizer = cter, tf_idf= True, ngram_range = (1, 2))
+    cter, train_cts = Features.keyPOSNGrams(train_pos, ["jj.*", "vb.*"], tf_idf = True, ngram_range = (1, 2), stop_words = 'english')
+    _, test_cts = Features.keyPOSNGrams(test_pos, ["jj.*", "vb.*"], vectorizer = cter, tf_idf= True, ngram_range = (1, 2), stop_words = 'english')
     train_matrix = Features.append_features([train_f5, train_cts])
     test_matrix = Features.append_features([test_f5, test_cts])
     return train_matrix, test_matrix
@@ -230,6 +230,43 @@ def test_perf(out_file):
     write_detailed(out_file, "Blog->Blog Test Perf", results_b)
     write_detailed(out_file, "Twitter+Wiki->Blog Test Perf", results_twb)
     write_detailed(out_file, "Twitter+Wiki->Twitter Test Perf", results_tw)
+
+
+def extra_features(train, test):
+    # uni and bigrams
+    state_info, train_ngrams = Features.wordCountsSkLearn(train, ngram_range = (1, 2), stop_words = 'english')
+    _, test_ngrams = Features.wordCountsSkLearn(test, vectorizer = state_info, ngram_range = (1, 2), stop_words = 'english')
+    # valence and punctuation
+    train_valence_punct, test_valence_punct = feat5(train, test)
+    # train matrix
+    train_matrix = Features.append_features([train_ngrams, train_valence_punct])
+    test_matrix = Features.append_features([test_ngrams, test_valence_punct])
+    return train_matrix, test_matrix
+
+
+def literature_comp(out_file):
+    # compare performance vs the way it was done in literature
+    # Blog 10-fold CV
+    blog_results_me = Models.model_cv(Models.LogisticRegression, blog, feat4, stratified = True)
+    blog_results_svm = Models.model_cv(Models.LinearSVC, blog, feat4, stratified = True)
+    blog_results_svm_tfidf = Models.model_cv(Models.LinearSVC, blog, feat2, stratified = True)
+
+    write_cv(out_file, "blog stratified ME feature 4 cv-10", blog_results_me)
+    write_cv(out_file, "blog stratified SVM feature 4 cv-10", blog_results_svm)
+    write_cv(out_file, "blog stratified SVM tf-idf cv-10", blog_results_svm_tfidf)
+
+    # twitter trained on solely twitter and evaluated on positive/negative classification
+    t_training_granular = to_utf8(prepareTwitterDataWithPNLabel(Globals.TWITTER_TRAIN, splitwords = False))
+    t_test_granular = to_utf8(prepareTwitterDataWithPNLabel(Globals.TWITTER_TEST, splitwords = False))
+    t_test_no_neutral = filter(lambda x: x[1] != '2', t_test_granular)
+    # twitter granular, ignore neutral
+    t_maxent = experiment_maxent(t_training_granular, t_test_no_neutral, feat4)
+    # just bigram counts...cannot get the performance report in the presentation
+    t_extra = experiment_maxent(t_training_granular, t_test_no_neutral, extra_features)
+    write_cv(out_file, "twitter ME feature 4 test results", t_maxent)
+    write_cv(out_file, "twitter ME extra (uni+bi+valence+punct) test results", t_extra)
+
+
 
 
 def main(action, out_path):
