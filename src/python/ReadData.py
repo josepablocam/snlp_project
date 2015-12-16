@@ -32,7 +32,7 @@ def prepareBlogDataWithEmotionLabel(blogDataPath, splitwords = True):
     data = readBlogData(blogDataPath, splitwords)
     to_lower = (lambda x: [w.lower() for w in x]) if splitwords else (lambda x: x.lower())
     return [ (to_lower(txt), label) for txt, label in data ]
-    
+
 def prepareBlogData(blogDataPath, splitwords = True):
     """
     Get blog data, if splitwords sentence = list of strings, else string, labele is 1 if emotional 0 if not emotional
@@ -69,10 +69,10 @@ def prepareWikiData(wikiDataFile, splitwords = True):
         if splitwords:
             labeledData.append((line.lower().rstrip().split(), '0'))
         else:
-            labeledData.append((line.lower().rstrip(), '0'))    
-    file.close()    
+            labeledData.append((line.lower().rstrip(), '0'))
+    file.close()
     return labeledData
-    
+
 
 def to_utf8(data, return_indices = False):
     """
@@ -113,3 +113,14 @@ def prepareTwitterDataWithPNLabel(twitterDataFile, splitwords = True):
     for (words, emotion) in originalData:
         dataForClassifier.append((words.lower(), emotion))
     return dataForClassifier
+
+def prepareTwitterTestData(twitterDataFile, splitwords = True):
+    """
+    Read twitter data, if splitwords sentence = list of strings, else string
+    """
+    data = []
+    twitterLabels, twitterSentences = readTwitterData(twitterDataFile, splitwords)
+    for i in range(len(twitterLabels)):
+        data.append((twitterSentences[i], twitterLabels[i]))
+    to_lower = (lambda x: [w.lower() for w in x]) if splitwords else (lambda x: x.lower())
+    return [ (to_lower(txt), label) for txt, label in data if label != '2']
