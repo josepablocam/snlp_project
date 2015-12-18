@@ -15,7 +15,7 @@ wiki_filters['no_paren_nums'] = lambda x: not re.match(r".*\([0-9]+\)", x)
 # though about removing stuff without a verb, but to be fair, tweets might not have verbs either
 
 
-def clean_wiki(data, filters = wiki_filters, filter_names = None):
+def clean_wiki(data, filters = wiki_filters, filter_names = None, return_indices = False):
     """
     Filter out elements in wiki data based on set of filters
     :param list: list of wikipedia sentences (each sentence being a string)
@@ -33,12 +33,15 @@ def clean_wiki(data, filters = wiki_filters, filter_names = None):
         missing = applied.difference(filter_names)
         raise ValueError("Unspecified filter names: %s" % ", ".join(missing))
     # ok down to business now
-    clean_data = data
+    clean_data = enumerate(data)
     for filter_name in applied:
         print "Applying filter: %s" % filter_name
         filter = filters[filter_name]
-        clean_data = [ obs for obs in clean_data if satisfies(filter, obs) ]
-    return clean_data
+        clean_data = [ (i, obs) for i, obs in clean_data if satisfies(filter, obs) ]
+    if return_indices:
+        return [i for i, _ in clean_data]
+    else:
+        return [obs for _, obs in clean_data]
 
 
 # an example

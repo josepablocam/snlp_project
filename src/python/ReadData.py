@@ -32,7 +32,7 @@ def prepareBlogDataWithEmotionLabel(blogDataPath, splitwords = True):
     data = readBlogData(blogDataPath, splitwords)
     to_lower = (lambda x: [w.lower() for w in x]) if splitwords else (lambda x: x.lower())
     return [ (to_lower(txt), label) for txt, label in data ]
-    
+
 def prepareBlogData(blogDataPath, splitwords = True):
     """
     Get blog data, if splitwords sentence = list of strings, else string, labele is 1 if emotional 0 if not emotional
@@ -69,24 +69,34 @@ def prepareWikiData(wikiDataFile, splitwords = True):
         if splitwords:
             labeledData.append((line.lower().rstrip().split(), '0'))
         else:
-            labeledData.append((line.lower().rstrip(), '0'))    
-    file.close()    
+            labeledData.append((line.lower().rstrip(), '0'))
+    file.close()
     return labeledData
-    
 
-def to_utf8(data):
+
+def to_utf8(data, return_indices = False):
     """
-    Decode as utf8, throws out elements that don't conform
+    Decode as utf8, throws out elements that don't conform, If return_indices == True, returns indices instead
+    of observations (useful to line up other pieces of information)
     """
     clean_data = []
-    decode = lambda x: (x[0].decode('utf-8'), x[1]) if isinstance(x, tuple) else x.decode('utf-8')
-    for obs in data:
+    # can run into UnicodeEncodeError if you try to decode something that is already unicode
+    safe_decode = lambda x: x if isinstance(x, unicode) else x.decode('utf-8')
+    decode = lambda x: (safe_decode(x[0]), x[1]) if isinstance(x, tuple) else x.decode('utf-8')
+    indices = []
+    n = len(data)
+    for i in range(n):
+        obs = data[i]
         try:
             clean_obs = decode(obs)
             clean_data.append(clean_obs)
+            indices.append(i)
         except UnicodeDecodeError:
             pass
-    return clean_data
+    if return_indices:
+        return indices
+    else:
+        return clean_data
 
 
 
@@ -103,3 +113,14 @@ def prepareTwitterDataWithPNLabel(twitterDataFile, splitwords = True):
     for (words, emotion) in originalData:
         dataForClassifier.append((words.lower(), emotion))
     return dataForClassifier
+
+def prepareTwitterTestData(twitterDataFile, splitwords = True):
+    """
+    Read twitter data, if splitwords sentence = list of strings, else string
+    """
+    data = []
+    twitterLabels, twitterSentences = readTwitterData(twitterDataFile, splitwords)
+    for i in range(len(twitterLabels)):
+        data.append((twitterSentences[i], twitterLabels[i]))
+    to_lower = (lambda x: [w.lower() for w in x]) if splitwords else (lambda x: x.lower())
+    return [ (to_lower(txt), label) for txt, label in data if label != '2']

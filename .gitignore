@@ -4,3 +4,5 @@ lib
 src/python/api_key.txt
 src/python/blog
 src/python/out.txt
+*.pyc
+bin

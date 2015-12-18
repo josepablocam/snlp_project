@@ -1,0 +1,112 @@
+experiment 1 b
+accuracy:0.715757
+std-error:0.021174
+
+experiment 1 twb
+             precision    recall  f1-score   support
+
+          0       0.84      0.49      0.62      2257
+          1       0.41      0.79      0.54      1015
+
+avg / total       0.70      0.58      0.59      3272
+
+Accuracy: 0.581296
+
+experiment 1 tw
+accuracy:0.533613
+std-error:0.094185
+
+experiment 2 b
+accuracy:0.748460
+std-error:0.018932
+
+experiment 2 twb
+             precision    recall  f1-score   support
+
+          0       0.80      0.24      0.37      2257
+          1       0.34      0.87      0.49      1015
+
+avg / total       0.66      0.43      0.40      3272
+
+Accuracy: 0.433374
+
+experiment 2 tw
+accuracy:0.973049
+std-error:0.003473
+
+experiment 3 b
+accuracy:0.764657
+std-error:0.020623
+
+experiment 3 twb
+             precision    recall  f1-score   support
+
+          0       0.80      0.25      0.38      2257
+          1       0.34      0.86      0.49      1015
+
+avg / total       0.66      0.44      0.42      3272
+
+Accuracy: 0.441320
+
+experiment 3 tw
+accuracy:0.972725
+std-error:0.001844
+
+experiment 4 b
+accuracy:0.766186
+std-error:0.023025
+
+experiment 4 twb
+             precision    recall  f1-score   support
+
+          0       0.80      0.27      0.41      2257
+          1       0.34      0.85      0.49      1015
+
+avg / total       0.66      0.45      0.43      3272
+
+Accuracy: 0.450795
+
+experiment 4 tw
+accuracy:0.975983
+std-error:0.000397
+
+experiment 5 b
+accuracy:0.715758
+std-error:0.027637
+
+experiment 5 twb
+             precision    recall  f1-score   support
+
+          0       0.81      0.59      0.68      2257
+          1       0.43      0.69      0.53      1015
+
+avg / total       0.69      0.62      0.63      3272
+
+Accuracy: 0.619499
+
+experiment 5 tw
+accuracy:0.686481
+std-error:0.038899
+
+experiment 6 b
+accuracy:0.750596
+std-error:0.025388
+
+experiment 6 twb
+             precision    recall  f1-score   support
+
+          0       0.86      0.28      0.42      2257
+          1       0.36      0.90      0.51      1015
+
+avg / total       0.71      0.47      0.45      3272
+
+Accuracy: 0.471577
+
+experiment 6 tw
+accuracy:0.921693
+std-error:0.001813
+
+paper comparison b
+accuracy:0.762836
+std-error:0.044213
+

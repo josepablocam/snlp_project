@@ -21,13 +21,15 @@ def getX(data):
 def getY(data):
     return [obs[1] for obs in data]
 
-def make_experiment_matrices(train_data, test_data, featurizer):
+def make_experiment_matrices(train_data, test_data, featurizer, getX = getX, getY = getY):
     """
     Returns dictionary of experiment matrices and label vectors
     :param train_data: training data (tuples of observation and label)
     :param test_data: test data (tuples of observation and label)
     :param featurizer: function that takes train_data and test_data and returns 2 matrices (tuple) of training
     and test X matrices (we do this in one step since some featurizers are stateful, e.g. counting words)
+    :param getX: function to extract X (default: Features.getX)
+    :param getY: function to extract Y (default: Features.getY)
     :return: dictionary {'train_X': training matrix X, 'train_Y': vector of X labels, etc}
     """
     train_X, test_X = featurizer(getX(train_data), getX(test_data))
@@ -95,6 +97,7 @@ def wordCountsSkLearn(documents, vectorizer = None, **args):
     so must be used consistently with new data
     """
     # train and fit, returns both vectorizer and result
+    print "Counting words"
     if vectorizer == None:
         vectorizer = CountVectorizer(**args)
         return (vectorizer, vectorizer.fit_transform(documents))
@@ -150,6 +153,7 @@ def tfIdfSkLearn(documents, vectorizer = None, **args):
     :param args:
     :return:
     """
+    print "Calculating tf-idf"
     # train and fit, returns both vectorizer and result
     if vectorizer == None:
         vectorizer = TfidfVectorizer(**args)
@@ -198,7 +202,7 @@ def avgSynsetScores(word, cache = None):
     if ct > 0:
         valence = (neg / ct, obj / ct, pos / ct)
         if numpy.isnan(valence).any():
-            ValueError("NaN Valence for %s" % word)
+            raise ValueError("NaN Valence for %s" % word)
     else:
         valence = (0.0, 0.0, 0.0)
 
@@ -218,11 +222,10 @@ def valenceByFrequency(documents, vectorizer = None, cache_valence = None, **arg
     :param args:
     :return:
     """
-    print "Count words in document"
+    print "Calculating average valence features"
     vectorizer, cts = wordCountsSkLearn(documents, vectorizer, **args)
     # now for each word in the vocabulary, retrieve a triple
     # of the average negative, objective, positive scores
-    print "Calculating valence for words in vocabulary"
     # sort it so that the rows match the column order
     valence_data = sorted([(col, avgSynsetScores(word, cache_valence)) for word, col in vectorizer.vocabulary_.iteritems()])
     valence_data = [valence for _, valence in valence_data]
@@ -255,7 +258,21 @@ def pos_in_txt(txt, pos):
     return re.match(pos_regex, txt) != None
 
 
-def keyPOSNGrams(tagged_documents, key_pos, vectorizer = None, **args):
+def relevantPOSVocabulary(vocabulary, key_pos):
+    """
+    Given a vocabulary coming from a vectorizer, returns values that meet a list of POS tags
+    :param vocabulary: part of speech tagged tokens (from a vectorizer)
+    :param key_pos: parts of speech to look for (or regex that identify that pos)
+    :return: set of relevant vocabulary
+    """
+    # return a new vocabulary
+    relevant_ngrams = []
+    for pos in key_pos:
+        relevant_ngrams += [ ngram for ngram in vocabulary if pos_in_txt(ngram, pos) ]
+    return set(relevant_ngrams)
+
+
+def keyPOSNGrams(tagged_documents, key_pos, vectorizer = None, tf_idf = False, **args):
     """
     Vectorizer and  matrix with ngram counts for ngrams that include a relevant part of speech
     Vectorizer's vocabulary mapping has been modified to solely contain relevant
@@ -271,18 +288,37 @@ def keyPOSNGrams(tagged_documents, key_pos, vectorizer = None, **args):
     vectorizer, cts = Features.keyPOSNGrams(tagged, ["jj.*", "vb.*"], ngram_range = (1, 2))
     """
     # count directly as is (so that columns will have word_pos counts)
-    vectorizer, cts = wordCountsSkLearn(tagged_documents, vectorizer, **args)
+    if tf_idf and vectorizer and type(vectorizer) != TfidfVectorizer:
+        raise ValueError("tf_idf = True but vectorizer passed in is not TfidfVectorizer")
+
+    if vectorizer == None:
+        # this is a first pass, collect the relevant vocabulary
+        print "Collecting relevant vocabulary (first pass)"
+        first_pass_vectorizer, _ = wordCountsSkLearn(tagged_documents, **args)
+        relevant_vocab = relevantPOSVocabulary(first_pass_vectorizer.vocabulary_, key_pos)
+        args['vocabulary'] = relevant_vocab
+
     # now let's only consider columns that have relevant POS
-    relevant_ngrams = list()
-    for pos in key_pos:
-        relevant_ngrams += [ ngram for ngram in vectorizer.vocabulary_ if pos_in_txt(ngram, pos)]
-    # sort relevant ngrams to guarantee that the order is the same always if you apply an existing vectorizer
-    relevant_ngrams = sorted(list(set(relevant_ngrams)))
-    relevant_cols = [vectorizer.vocabulary_[ngram] for ngram in relevant_ngrams ]
-    ngram_matrix = cts[:, relevant_cols]
-    updated_ngram_mapping = dict(zip(relevant_ngrams, range(0, len(relevant_ngrams))))
-    vectorizer.vocabulary_ = updated_ngram_mapping
-    return vectorizer, ngram_matrix
+    if tf_idf:
+        vectorizer, cts = tfIdfSkLearn(tagged_documents, vectorizer, **args)
+    else:
+        vectorizer, cts = wordCountsSkLearn(tagged_documents, vectorizer, **args)
+    return vectorizer, cts
+
+
+def punctuation(documents, puncts = None, vectorizer = None, **kwargs):
+    # default punctuation to look for
+    print "Calculating punctuation features"
+    puncts = puncts if puncts else ['?', '!', '...']
+    results = []
+    for document in documents:
+        doc_results = [ ("has_%s" % punct, punct in document) for punct in puncts ]
+        results.append(dict(doc_results))
+    if vectorizer == None:
+        vectorizer = DictVectorizer()
+        return vectorizer, vectorizer.fit_transform(results)
+    else:
+        return vectorizer, vectorizer.transform(results)
 
 
 if __name__ == "__main__":

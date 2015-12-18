@@ -8,6 +8,11 @@ from sklearn import svm
 from sklearn.lda import LDA
 from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.mixture.gmm import GMM
+from scipy.sparse import issparse
+from sklearn.metrics import confusion_matrix
+from sklearn.cross_validation import KFold, StratifiedKFold
+import numpy
+import Features
 
 def report_performance(gold, predicted):
     """
@@ -57,7 +62,11 @@ def report_GaussianNB(train_X, train_Y, test_X, test_Y):
     model_name = "Gaussian Naive Bayes"
     make_model = lambda: GaussianNB()
     # Gaussian NB wants matrices to be dense
-    return report_model(make_model, train_X.todense(), train_Y, test_X.todense(), test_Y, model_name)
+    if issparse(train_X):
+        train_X = train_X.todense()
+    if issparse(test_X):
+        test_X = test_X.todense()
+    return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
 
 def report_MaxEnt(train_X, train_Y, test_X, test_Y, **args):
     model_name = "MaxEnt"
@@ -108,7 +117,80 @@ def report_GMM(train_X, train_Y, test_X, test_Y):
     make_model = lambda: GMM()
     return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
 
-def report_LogisticReg(train_X, train_Y, test_X, test_Y):
-    model_name = "Logistic Regression Classifier"
-    make_model = lambda: LogisticRegression()
-    return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
+# Covered by report_MaxEnt above
+# def report_LogisticReg(train_X, train_Y, test_X, test_Y):
+#     model_name = "Logistic Regression Classifier"
+#     make_model = lambda: LogisticRegression()
+#     return report_model(make_model, train_X, train_Y, test_X, test_Y, model_name)
+
+def model_cv(make_model, data, featurizer, n_folds = 10, random_state = 1, getX = Features.getX, getY = Features.getY, stratified = False, **kwargs):
+    """
+    Run cross validation given a functino to create model, data, function to create features
+    :param make_model: lambda (no-args) to create model (called once per fold)
+    :param data: data to use (tuples of (x,y))
+    :param featurizer: function called on x to create features. Called jointly on training and test data, as features
+    can be stateful (e.g. vocabulary found in training data)
+    :param n_folds: (default = 10) number of folds for evaluation
+    :param random_state: seed for reproducibility
+    :param getX: function to get X from data (default: Features.getX)
+    :param getY: function to get Y from data (default: Features.getY)
+    :param kwargs: additional (optional) arguments
+    :return: tuple of mean of accuracy and std error of accuracy
+    """
+    nobs = len(data)
+    cv_accuracies = []
+    if stratified:
+        folds = StratifiedKFold(getY(data), n_folds = n_folds, random_state = random_state, **kwargs)
+    else:
+        folds = KFold(n = nobs, n_folds= n_folds, random_state = random_state, **kwargs)
+    get_elems_at = lambda vals, indices: [vals[i] for i in indices]
+    for fold_id, (train_indices, test_indices) in enumerate(folds):
+        print "Running fold %d" % fold_id
+        train_data = get_elems_at(data, train_indices)
+        test_data = get_elems_at(data, test_indices)
+        # Featurize each time since our features can depend on training data
+        matrices = Features.make_experiment_matrices(train_data, test_data, featurizer, getX, getY)
+        # always make a new version of model...safer, not sure if model.fit would overwrite if re-trained
+        # as we want
+        model = make_model()
+        model.fit(matrices['train_X'], matrices['train_Y'])
+        accuracy = model.score(matrices['test_X'], matrices['test_Y'])
+        cv_accuracies.append(accuracy)
+    mean_accuracy = numpy.mean(cv_accuracies)
+    std_accuracy = numpy.std(cv_accuracies)
+    return (mean_accuracy, std_accuracy)
+
+
+def extended_predict(trained_model, test_X, test_Y):
+    """
+    Predict with a model and extend predictions with probability info
+    :param trained_model:
+    :param test_X:
+    :param test_Y:
+    :return: list of triples (observed Y, predicted Y, probability assigned by model)
+    """
+    predictions = trained_model.predict(test_X)
+    probabilities = trained_model.predict_proba(test_X).max(axis = 1)
+    return zip(test_Y, predictions, probabilities)
+
+
+def error_analysis(predicted_tuples, labels = None, bins = None):
+    """
+    Some basic error reporting for analysis
+    :param predicted_tuples: triples of (observed, predicted, probability for predicted)
+    :return: dictionary with confusion matrix, histogram of error confidence and
+    tuples of indices of errors and confidence, sorted in descending order by confidence (want worse errors first)
+    """
+    # confusion matrix
+    y_true, y_pred, probs = map(list, zip(*predicted_tuples))
+    conf_matrix = confusion_matrix(y_true, y_pred, labels = labels)
+    # indices for errors
+    error_indices = [i for i, (obs, pred, _) in enumerate(predicted_tuples) if obs != pred]
+    # distribution of probabilities for errors
+    # set default to 10 (as numpy does, i.e. pick bins on it's own)
+    bins = 10 if not bins else bins
+    error_probs = numpy.array(probs)[error_indices]
+    error_conf_dist = numpy.histogram(error_probs, bins = bins)
+    # extend error index info with probabilites and sort by descending probability (i.e. want worse errors first)
+    ext_error_indices = sorted(zip(error_indices, error_probs), key = lambda x: -x[1])
+    return {'confusion_matrix': conf_matrix, 'error_conf_dist': error_conf_dist, 'error_indices': ext_error_indices}
